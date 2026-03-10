@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tally">
+    <title>Tally</title>
+
+```
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg: #0a0a0a;
+        --surface: #141414;
+        --surface-hover: #1a1a1a;
+        --border: #222222;
+        --text-primary: #e8e8e8;
+        --text-secondary: #707070;
+        --text-muted: #444444;
+        --accent-since: #4ade80;
+        --accent-since-dim: #4ade8015;
+        --accent-until: #60a5fa;
+        --accent-until-dim: #60a5fa15;
+        --danger: #f87171;
+        --danger-dim: #f8717115;
+        --font-sans: 'DM Sans', -apple-system, sans-serif;
+        --font-mono: 'DM Mono', 'SF Mono', monospace;
+        --radius: 16px;
+        --radius-sm: 10px;
+    }
+
+    *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background: var(--bg);
+        color: var(--text-primary);
+        min-height: 100dvh;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -webkit-touch-callout: none;
+    }
+
+    /* iOS Touch Fix: alle interaktiven Elemente */
+    button, input, [role="button"] {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        cursor: pointer;
+    }
+
+    .app {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 24px 16px 120px;
+    }
+
+    /* HEADER */
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0 32px;
+    }
+
+    .logo {
+        font-family: var(--font-mono);
+        font-size: 1.25rem;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+    }
+
+    .logo span {
+        color: var(--text-muted);
+        font-weight: 300;
+    }
+
+    .btn-add {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1.5px solid var(--border);
+        background: var(--surface);
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add:active {
+        transform: scale(0.95);
+        background: var(--surface-hover);
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-state .icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .empty-state .hint {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: 8px;
+    }
+
+    /* COUNTER CARDS */
+    .counters {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .counter-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        position: relative;
+        animation: cardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    @keyframes cardIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .counter-card .top-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .counter-type {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 100px;
+    }
+
+    .counter-type.since {
+        color: var(--accent-since);
+        background: var(--accent-since-dim);
+    }
+
+    .counter-type.until {
+        color: var(--accent-until);
+        background: var(--accent-until-dim);
+    }
+
+    .counter-type.done {
+        color: var(--bg);
+        background: var(--text-muted);
+    }
+
+    .btn-delete {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete:active {
+        background: var(--danger-dim);
+        color: var(--danger);
+    }
+
+    .counter-description {
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+
+    .counter-date {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    .counter-number {
+        font-family: var(--font-mono);
+        font-weight: 300;
+        line-height: 1;
+        letter-spacing: -0.04em;
+    }
+
+    .counter-number .days {
+        font-size: 3rem;
+        color: var(--text-primary);
+    }
+
+    .counter-card.since .counter-number .days {
+        color: var(--accent-since);
+    }
+
+    .counter-card.until .counter-number .days {
+        color: var(--accent-until);
+    }
+
+    .counter-card.done .counter-number .days {
+        color: var(--text-muted);
+    }
+
+    .counter-number .label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-left: 6px;
+        font-weight: 400;
+    }
+
+    .counter-subtime {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 100;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius) var(--radius) 0 0;
+        padding: 28px 20px 40px;
+        width: 100%;
+        max-width: 480px;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .modal h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+
+    .type-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .type-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .type-btn.active-since {
+        border-color: var(--accent-since);
+        color: var(--accent-since);
+        background: var(--accent-since-dim);
+    }
+
+    .type-btn.active-until {
+        border-color: var(--accent-until);
+        color: var(--accent-until);
+        background: var(--accent-until-dim);
+    }
+
+    .field {
+        margin-bottom: 16px;
+    }
+
+    .field label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .field input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 16px; /* Verhindert iOS Auto-Zoom */
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+
+    .field input:focus {
+        border-color: var(--text-secondary);
+    }
+
+    .field input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .field input[type="date"] {
+        color-scheme: dark;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 14px;
+        border-radius: var(--radius-sm);
+        border: none;
+        font-family: var(--font-sans);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 8px;
+    }
+
+    .btn-submit.since {
+        background: var(--accent-since);
+        color: #0a0a0a;
+    }
+
+    .btn-submit.until {
+        background: var(--accent-until);
+        color: #0a0a0a;
+    }
+
+    .btn-submit:active {
+        opacity: 0.8;
+    }
+
+    @media (max-width: 380px) {
+        .counter-number .days {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo">tally<span>.</span></div>
+            <button class="btn-add" id="btn-add" aria-label="Neuen Counter hinzufügen">+</button>
+        </header>
+
+```
+    <div id="counters" class="counters"></div>
+
+    <div id="empty" class="empty-state" style="display:none;">
+        <div class="icon">◯</div>
+        <p>Noch keine Counter.</p>
+        <p class="hint">Tippe auf + um anzufangen.</p>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal" id="modal-content">
+        <h2>Neuer Counter</h2>
+
+        <div class="type-selector">
+            <button class="type-btn active-since" id="btn-since">Seit …</button>
+            <button class="type-btn" id="btn-until">Bis …</button>
+        </div>
+
+        <div class="field">
+            <label for="input-desc">Beschreibung</label>
+            <input type="text" id="input-desc" placeholder="z.B. Kein Weed" maxlength="60" autocomplete="off">
+        </div>
+
+        <div class="field">
+            <label for="input-date" id="label-date">Startdatum</label>
+            <input type="date" id="input-date">
+        </div>
+
+        <button class="btn-submit since" id="btn-save">Counter starten</button>
+    </div>
+</div>
+
+<script>
+    // === STATE ===
+    var counters = [];
+    var currentType = 'since';
+
+    // === ELEMENTE ===
+    var btnAdd = document.getElementById('btn-add');
+    var btnSince = document.getElementById('btn-since');
+    var btnUntil = document.getElementById('btn-until');
+    var btnSave = document.getElementById('btn-save');
+    var modal = document.getElementById('modal');
+    var modalContent = document.getElementById('modal-content');
+    var inputDesc = document.getElementById('input-desc');
+    var inputDate = document.getElementById('input-date');
+    var labelDate = document.getElementById('label-date');
+    var countersEl = document.getElementById('counters');
+    var emptyEl = document.getElementById('empty');
+
+    // === EVENT LISTENERS (iOS-safe) ===
+    btnAdd.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        openModal();
+    });
+    btnAdd.addEventListener('click', function(e) {
+        openModal();
+    });
+
+    btnSince.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        setType('since');
+    });
+    btnSince.addEventListener('click', function() {
+        setType('since');
+    });
+
+    btnUntil.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        setType('until');
+    });
+    btnUntil.addEventListener('click', function() {
+        setType('until');
+    });
+
+    btnSave.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        saveCounter();
+    });
+    btnSave.addEventListener('click', function() {
+        saveCounter();
+    });
+
+    modal.addEventListener('touchend', function(e) {
+        if (e.target === modal) {
+            e.preventDefault();
+            closeModal();
+        }
+    });
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Delete buttons: event delegation auf den Container
+    countersEl.addEventListener('touchend', function(e) {
+        var btn = e.target.closest('.btn-delete');
+        if (btn) {
+            e.preventDefault();
+            var id = btn.getAttribute('data-id');
+            deleteCounter(id);
+        }
+    });
+    countersEl.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-delete');
+        if (btn) {
+            var id = btn.getAttribute('data-id');
+            deleteCounter(id);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Enter' && modal.classList.contains('active')) {
+            saveCounter();
+        }
+    });
+
+    // === FUNKTIONEN ===
+    function init() {
+        try {
+            var stored = localStorage.getItem('tally_counters');
+            if (stored) {
+                counters = JSON.parse(stored);
+            }
+        } catch(e) {}
+        render();
+        setInterval(render, 60000);
+    }
+
+    function save() {
+        try {
+            localStorage.setItem('tally_counters', JSON.stringify(counters));
+        } catch(e) {}
+    }
+
+    function calcDiff(dateStr) {
+        var target = new Date(dateStr + 'T00:00:00');
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var diffMs = today - target;
+        return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function formatSubtime(days) {
+        var absDays = Math.abs(days);
+        if (absDays < 7) return null;
+        var weeks = Math.floor(absDays / 7);
+        var months = Math.floor(absDays / 30.44);
+        var years = Math.floor(absDays / 365.25);
+        if (years >= 1) {
+            var rm = Math.floor((absDays - years * 365.25) / 30.44);
+            return rm > 0 ? years + (years > 1 ? ' Jahre, ' : ' Jahr, ') + rm + (rm > 1 ? ' Monate' : ' Monat') : years + (years > 1 ? ' Jahre' : ' Jahr');
+        }
+        if (months >= 1) {
+            var rw = Math.floor((absDays - months * 30.44) / 7);
+            return rw > 0 ? months + (months > 1 ? ' Monate, ' : ' Monat, ') + rw + (rw > 1 ? ' Wochen' : ' Woche') : months + (months > 1 ? ' Monate' : ' Monat');
+        }
+        return weeks + (weeks > 1 ? ' Wochen' : ' Woche');
+    }
+
+    function formatDate(dateStr) {
+        var d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function render() {
+        if (counters.length === 0) {
+            countersEl.innerHTML = '';
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+
+        var sorted = counters.slice().sort(function(a, b) {
+            var daysA = calcDiff(a.date);
+            var daysB = calcDiff(b.date);
+            if (a.type === 'since' && b.type === 'since') return daysB - daysA;
+            if (a.type === 'until' && b.type === 'until') return daysA - daysB;
+            if (a.type === 'since') return -1;
+            return 1;
+        });
+
+        var html = '';
+        for (var i = 0; i < sorted.length; i++) {
+            var counter = sorted[i];
+            var diff = calcDiff(counter.date);
+            var absDays = Math.abs(diff);
+            var subtime = formatSubtime(diff);
+            var typeClass, typeLabel, daysDisplay;
+
+            if (counter.type === 'since') {
+                typeClass = 'since';
+                typeLabel = 'Seit';
+                daysDisplay = absDays;
+            } else {
+                if (diff > 0) {
+                    typeClass = 'done';
+                    typeLabel = 'Erreicht';
+                    daysDisplay = 0;
+                } else {
+                    typeClass = 'until';
+                    typeLabel = 'Noch';
+                    daysDisplay = absDays;
+                }
+            }
+
+            html += '<div class="counter-card ' + typeClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
+                '<div class="top-row">' +
+                    '<span class="counter-type ' + typeClass + '">' + typeLabel + '</span>' +
+                    '<button class="btn-delete" data-id="' + counter.id + '" role="button" aria-label="Löschen">✕</button>' +
+                '</div>' +
+                '<div class="counter-description">' + escapeHtml(counter.description) + '</div>' +
+                '<div class="counter-date">' + (counter.type === 'since' ? 'seit' : 'bis') + ' ' + formatDate(counter.date) + '</div>' +
+                '<div class="counter-number">' +
+                    '<span class="days">' + daysDisplay + '</span>' +
+                    '<span class="label">' + (daysDisplay === 1 ? 'Tag' : 'Tage') + '</span>' +
+                '</div>' +
+                (subtime ? '<div class="counter-subtime">' + subtime + '</div>' : '') +
+            '</div>';
+        }
+        countersEl.innerHTML = html;
+    }
+
+    function openModal() {
+        modal.classList.add('active');
+        inputDesc.value = '';
+        inputDate.value = new Date().toISOString().split('T')[0];
+        setType('since');
+        setTimeout(function() { inputDesc.focus(); }, 300);
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    function setType(type) {
+        currentType = type;
+        btnSince.className = 'type-btn' + (type === 'since' ? ' active-since' : '');
+        btnUntil.className = 'type-btn' + (type === 'until' ? ' active-until' : '');
+        btnSave.className = 'btn-submit ' + type;
+        btnSave.textContent = type === 'since' ? 'Counter starten' : 'Countdown starten';
+        labelDate.textContent = type === 'since' ? 'Startdatum' : 'Zieldatum';
+    }
+
+    function saveCounter() {
+        var desc = inputDesc.value.trim();
+        var date = inputDate.value;
+        if (!desc) { inputDesc.focus(); return; }
+        if (!date) { inputDate.focus(); return; }
+
+        counters.push({
+            id: Date.now().toString(),
+            type: currentType,
+            description: desc,
+            date: date,
+            createdAt: Date.now()
+        });
+        save();
+        render();
+        closeModal();
+    }
+
+    function deleteCounter(id) {
+        counters = counters.filter(function(c) { return c.id !== id; });
+        save();
+        render();
+    }
+
+    // START
+    init();
+</script>
+```
+
+</body>
+</html>
