@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Tally</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS VARIABLES — hier definieren wir Farben und Fonts zentral.
+           Wenn du das Design ändern willst, änderst du nur hier.
+           ======================================== */
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-hover: #1a1a1a;
+            --border: #222222;
+            --text-primary: #e8e8e8;
+            --text-secondary: #707070;
+            --text-muted: #444444;
+            --accent-since: #4ade80;
+            --accent-since-dim: #4ade8015;
+            --accent-until: #60a5fa;
+            --accent-until-dim: #60a5fa15;
+            --danger: #f87171;
+            --danger-dim: #f8717115;
+            --font-sans: 'DM Sans', -apple-system, sans-serif;
+            --font-mono: 'DM Mono', 'SF Mono', monospace;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        /* ========================================
+           RESET & BASE — Grundeinstellungen für alle Elemente
+           ======================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100dvh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========================================
+           APP CONTAINER — zentriert alles mit max-width
+           ======================================== */
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px 120px;
+        }
+
+        /* ========================================
+           HEADER — Logo und Add-Button
+           ======================================== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0 32px;
+        }
+
+        .logo {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .logo span {
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        .btn-add {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-add:hover {
+            background: var(--surface-hover);
+            border-color: var(--text-muted);
+            transform: scale(1.05);
+        }
+
+        .btn-add:active {
+            transform: scale(0.95);
+        }
+
+        /* ========================================
+           EMPTY STATE — wenn keine Counter existieren
+           ======================================== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .empty-state .hint {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        /* ========================================
+           COUNTER CARDS — das Herzstück der App
+           ======================================== */
+        .counters {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .counter-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            transition: all 0.2s ease;
+            animation: cardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes cardIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .counter-card:hover {
+            border-color: var(--text-muted);
+        }
+
+        .counter-card .top-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .counter-type {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+
+        .counter-type.since {
+            color: var(--accent-since);
+            background: var(--accent-since-dim);
+        }
+
+        .counter-type.until {
+            color: var(--accent-until);
+            background: var(--accent-until-dim);
+        }
+
+        .counter-type.done {
+            color: var(--text-muted);
+            background: var(--text-muted);
+            color: var(--bg);
+        }
+
+        .btn-delete {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+
+        .counter-card:hover .btn-delete {
+            opacity: 1;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-dim);
+            color: var(--danger);
+        }
+
+        .counter-description {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .counter-date {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .counter-number {
+            font-family: var(--font-mono);
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+
+        .counter-number .days {
+            font-size: 3rem;
+            color: var(--text-primary);
+        }
+
+        .counter-card.since .counter-number .days {
+            color: var(--accent-since);
+        }
+
+        .counter-card.until .counter-number .days {
+            color: var(--accent-until);
+        }
+
+        .counter-card.done .counter-number .days {
+            color: var(--text-muted);
+        }
+
+        .counter-number .label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-left: 6px;
+            font-weight: 400;
+        }
+
+        .counter-subtime {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ========================================
+           MODAL — das Formular zum Hinzufügen
+           ======================================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 28px 20px 40px;
+            width: 100%;
+            max-width: 480px;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Type Selector */
+        .type-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .type-btn.active-since {
+            border-color: var(--accent-since);
+            color: var(--accent-since);
+            background: var(--accent-since-dim);
+        }
+
+        .type-btn.active-until {
+            border-color: var(--accent-until);
+            color: var(--accent-until);
+            background: var(--accent-until-dim);
+        }
+
+        /* Form Fields */
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .field input:focus {
+            border-color: var(--text-secondary);
+        }
+
+        .field input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Override browser date input styling */
+        .field input[type="date"] {
+            color-scheme: dark;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .btn-submit.since {
+            background: var(--accent-since);
+            color: #0a0a0a;
+        }
+
+        .btn-submit.until {
+            background: var(--accent-until);
+            color: #0a0a0a;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* ========================================
+           RESPONSIVE — Anpassungen für kleinere Screens
+           ======================================== */
+        @media (max-width: 380px) {
+            .counter-number .days {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Touch devices: always show delete button */
+        @media (hover: none) {
+            .btn-delete {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">tally<span>.</span></div>
+            <button class="btn-add" onclick="openModal()" aria-label="Neuen Counter hinzufügen">+</button>
+        </header>
+
+        <!-- Counter List -->
+        <div id="counters" class="counters"></div>
+
+        <!-- Empty State -->
+        <div id="empty" class="empty-state" style="display:none;">
+            <div class="icon">◯</div>
+            <p>Noch keine Counter.</p>
+            <p class="hint">Tippe auf + um anzufangen.</p>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+        <div class="modal">
+            <h2>Neuer Counter</h2>
+
+            <!-- Typ-Auswahl: Seit oder Bis -->
+            <div class="type-selector">
+                <button class="type-btn active-since" id="btn-since" onclick="setType('since')">Seit …</button>
+                <button class="type-btn" id="btn-until" onclick="setType('until')">Bis …</button>
+            </div>
+
+            <!-- Beschreibung -->
+            <div class="field">
+                <label for="input-desc">Beschreibung</label>
+                <input type="text" id="input-desc" placeholder="z.B. Kein Weed" maxlength="60" autocomplete="off">
+            </div>
+
+            <!-- Datum -->
+            <div class="field">
+                <label for="input-date" id="label-date">Startdatum</label>
+                <input type="date" id="input-date">
+            </div>
+
+            <!-- Submit -->
+            <button class="btn-submit since" id="btn-save" onclick="saveCounter()">Counter starten</button>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================
+           DATENMODELL
+           
+           Jeder Counter ist ein Objekt:
+           {
+               id: einzigartige ID (Zeitstempel),
+               type: "since" oder "until",
+               description: "Kein Weed",
+               date: "2026-03-10" (ISO-Format),
+               createdAt: Zeitstempel
+           }
+           
+           Alles wird in localStorage gespeichert.
+           ======================================== */
+
+        // --- STATE ---
+        let counters = [];
+        let currentType = 'since';
+        let updateInterval = null;
+
+        // --- INIT ---
+        // Beim Laden: Daten aus localStorage lesen und rendern
+        function init() {
+            const stored = localStorage.getItem('tally_counters');
+            if (stored) {
+                counters = JSON.parse(stored);
+            }
+            render();
+            // Jede Minute aktualisieren (für Live-Counter)
+            updateInterval = setInterval(render, 60000);
+        }
+
+        // --- SPEICHERN ---
+        // Schreibt den aktuellen State in localStorage
+        function save() {
+            localStorage.setItem('tally_counters', JSON.stringify(counters));
+        }
+
+        // --- BERECHNUNG ---
+        // Berechnet die Differenz zwischen heute und dem Zieldatum
+        function calcDiff(dateStr) {
+            const target = new Date(dateStr + 'T00:00:00');
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            const diffMs = today - target;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            return diffDays; // positiv = Vergangenheit, negativ = Zukunft
+        }
+
+        // Formatiert die Detailzeit (Wochen, Monate)
+        function formatSubtime(days) {
+            const absDays = Math.abs(days);
+            if (absDays < 7) return null;
+            
+            const weeks = Math.floor(absDays / 7);
+            const months = Math.floor(absDays / 30.44);
+            const years = Math.floor(absDays / 365.25);
+            
+            if (years >= 1) {
+                const remainMonths = Math.floor((absDays - years * 365.25) / 30.44);
+                return remainMonths > 0 
+                    ? `${years} Jahr${years > 1 ? 'e' : ''}, ${remainMonths} Monat${remainMonths > 1 ? 'e' : ''}`
+                    : `${years} Jahr${years > 1 ? 'e' : ''}`;
+            }
+            if (months >= 1) {
+                const remainWeeks = Math.floor((absDays - months * 30.44) / 7);
+                return remainWeeks > 0
+                    ? `${months} Monat${months > 1 ? 'e' : ''}, ${remainWeeks} Woche${remainWeeks > 1 ? 'n' : ''}`
+                    : `${months} Monat${months > 1 ? 'e' : ''}`;
+            }
+            return `${weeks} Woche${weeks > 1 ? 'n' : ''}`;
+        }
+
+        // Datum schön formatieren
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // --- RENDERN ---
+        // Baut die gesamte Counter-Liste neu auf
+        function render() {
+            const container = document.getElementById('counters');
+            const empty = document.getElementById('empty');
+
+            if (counters.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+
+            // Sortierung: "since" Counter nach Tagen absteigend, "until" nach Tagen aufsteigend
+            const sorted = [...counters].sort((a, b) => {
+                const daysA = calcDiff(a.date);
+                const daysB = calcDiff(b.date);
+                if (a.type === 'since' && b.type === 'since') return daysB - daysA;
+                if (a.type === 'until' && b.type === 'until') return daysA - daysB;
+                if (a.type === 'since') return -1;
+                return 1;
+            });
+
+            container.innerHTML = sorted.map((counter, i) => {
+                const diff = calcDiff(counter.date);
+                const absDays = Math.abs(diff);
+                const subtime = formatSubtime(diff);
+                
+                let typeClass, typeLabel, daysDisplay;
+                
+                if (counter.type === 'since') {
+                    typeClass = 'since';
+                    typeLabel = 'Seit';
+                    daysDisplay = absDays;
+                } else {
+                    // Until: wenn Datum vorbei ist, zeige "done"
+                    if (diff > 0) {
+                        typeClass = 'done';
+                        typeLabel = 'Erreicht';
+                        daysDisplay = 0;
+                    } else {
+                        typeClass = 'until';
+                        typeLabel = 'Noch';
+                        daysDisplay = absDays;
+                    }
+                }
+
+                return `
+                    <div class="counter-card ${typeClass}" style="animation-delay: ${i * 0.05}s">
+                        <div class="top-row">
+                            <span class="counter-type ${typeClass}">${typeLabel}</span>
+                            <button class="btn-delete" onclick="deleteCounter('${counter.id}')" aria-label="Löschen">✕</button>
+                        </div>
+                        <div class="counter-description">${escapeHtml(counter.description)}</div>
+                        <div class="counter-date">${counter.type === 'since' ? 'seit' : 'bis'} ${formatDate(counter.date)}</div>
+                        <div class="counter-number">
+                            <span class="days">${daysDisplay}</span>
+                            <span class="label">${daysDisplay === 1 ? 'Tag' : 'Tage'}</span>
+                        </div>
+                        ${subtime ? `<div class="counter-subtime">${subtime}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // HTML-Sonderzeichen escapen (Sicherheit)
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // --- MODAL ---
+        function openModal() {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('input-desc').value = '';
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            setType('since');
+            // Fokus auf Beschreibung
+            setTimeout(() => document.getElementById('input-desc').focus(), 300);
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function closeModalOutside(e) {
+            if (e.target === document.getElementById('modal')) {
+                closeModal();
+            }
+        }
+
+        // Typ umschalten (Seit / Bis)
+        function setType(type) {
+            currentType = type;
+            const btnSince = document.getElementById('btn-since');
+            const btnUntil = document.getElementById('btn-until');
+            const btnSave = document.getElementById('btn-save');
+            const labelDate = document.getElementById('label-date');
+
+            btnSince.className = 'type-btn' + (type === 'since' ? ' active-since' : '');
+            btnUntil.className = 'type-btn' + (type === 'until' ? ' active-until' : '');
+            
+            btnSave.className = 'btn-submit ' + type;
+            btnSave.textContent = type === 'since' ? 'Counter starten' : 'Countdown starten';
+            labelDate.textContent = type === 'since' ? 'Startdatum' : 'Zieldatum';
+        }
+
+        // --- COUNTER ERSTELLEN ---
+        function saveCounter() {
+            const desc = document.getElementById('input-desc').value.trim();
+            const date = document.getElementById('input-date').value;
+
+            if (!desc) {
+                document.getElementById('input-desc').focus();
+                return;
+            }
+            if (!date) {
+                document.getElementById('input-date').focus();
+                return;
+            }
+
+            const counter = {
+                id: Date.now().toString(),
+                type: currentType,
+                description: desc,
+                date: date,
+                createdAt: Date.now()
+            };
+
+            counters.push(counter);
+            save();
+            render();
+            closeModal();
+        }
+
+        // --- COUNTER LÖSCHEN ---
+        function deleteCounter(id) {
+            counters = counters.filter(c => c.id !== id);
+            save();
+            render();
+        }
+
+        // --- KEYBOARD SUPPORT ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active')) {
+                saveCounter();
+            }
+        });
+
+        // App starten
+        init();
+    </script>
+</body>
+</html>
